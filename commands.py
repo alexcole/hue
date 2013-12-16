@@ -77,7 +77,7 @@ def color_strobe(ms, speed, red, green, blue):
 	Speed is a string from '04' to '30' (ish)
 	"""
 
-	point_symbol = json.dumps({"1":"%s000000FF%s%s%s00000000000000000" % (speed, red, green, blue)})
+	point_symbol = json.dumps({"1":"%s000000FF%s%s%s000000000000000000000000" % (speed, red, green, blue)})
 	for i in numbers:
 		url = base_url+"lights/%s/pointsymbol" % str(i)
 		requests.put(url, data=point_symbol)
