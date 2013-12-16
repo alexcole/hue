@@ -1,17 +1,19 @@
-import constants
+from constants import *
 import requests
 import json
-
+import random
+import time
 
 def set_light_state(number, data):
 	jsondata = json.dumps(data)
-	url = constants.base_url+"lights/%s/state" % str(number)
-	r = requests.put(url, data=jsondata)
-	return r.text
-
+	url = base_url+"lights/%s/state" % str(number)
+	return requests.put(url, data=jsondata).text
 
 def color_loop(number):
 	return set_light_state(number, {"effect": "colorloop"})
+
+def stop_color_loop(number):
+	return set_light_state(number, {"effect": "none"})
 
 def off(number):
 	return set_light_state(number, {"on":False})
@@ -20,8 +22,64 @@ def on(number):
 	return set_light_state(number, {"on":True})
 
 
-def all_lights(f, *args):
-	result = []
-	for i in constants.numbers:
-		result.append(f(i, *args))
-	return result
+def breath(number):
+	return set_light_state(number, {"alert":"select"})
+
+def color(number, hue, sat, bri, time=4):
+	return set_light_state(number, {"hue":hue, "sat":sat, "bri": bri, "transitiontime": time})
+
+def random_color(number, time):
+	hue = random.randint(minhue, maxhue)
+	color(number, hue, maxsat, maxbri, time=time)
+
+def rave():
+	while True:
+		for i in numbers:
+			random_color(i, 0)
+			time.sleep(.05)
+
+
+
+def strobe(ms):
+	# THis is dark magic from http://weblog.lmeijer.nl/archives/225-Do-hue-want-a-strobe-up-there.html
+
+	# Set up point symbol on all lights
+	point_symbol = json.dumps({"1":"0A00F1F01F1F1001F1FF100000000000000"})
+	for i in numbers:
+		url = base_url+"lights/%s/pointsymbol" % str(i)
+		requests.put(url, data=point_symbol)
+
+	# Start it using group 0
+	data = json.dumps({"symbolselection":"01010501010102010301040105","duration":ms})
+	url = base_url+"groups/0/transmitsymbol"
+	return requests.put(url, data=data).text
+
+
+
+
+def strobe2(foo, ms):
+	# THis is dark magic from http://weblog.lmeijer.nl/archives/225-Do-hue-want-a-strobe-up-there.html
+
+	# Set up point symbol on all lights
+	point_symbol = json.dumps({"1":foo})
+	for i in numbers:
+		url = base_url+"lights/%s/pointsymbol" % str(i)
+		print requests.put(url, data=point_symbol).text
+
+	# Start it using group 0
+	data = json.dumps({"symbolselection":"01010501010102010301040105","duration":ms})
+	url = base_url+"groups/0/transmitsymbol"
+	return requests.put(url, data=data).text
+
+
+
+
+
+def all_lights(f, *args, **kwargs):
+	"""
+	Runs f in the background on all the lights
+	"""
+	answer = []
+	for i in numbers:
+		answer.append(f(i, *args, **kwargs))
+	return answer
